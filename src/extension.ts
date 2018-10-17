@@ -2,75 +2,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-
-export interface IKeyedCollection<T> {
-    Add(key: string, value: T): boolean;
-    ContainsKey(key: string): boolean;
-    Count(): number;
-    Item(key: string): T;
-    Keys(): string[];
-    Remove(key: string): T;
-    Values(): T[];
-}
-
-export class KeyedCollection<T> implements IKeyedCollection<T> {
-    private items: { [index: string]: T } = {};
- 
-    private count: number = 0;
- 
-    public ContainsKey(key: string): boolean {
-        return this.items.hasOwnProperty(key);
-    }
- 
-    public Count(): number {
-        return this.count;
-    }
- 
-    public Add(key: string, value: T) {
-        if (!this.items.hasOwnProperty(key)) {
-             this.count++;
-        }
- 
-        this.items[key] = value;
-
-        return true;
-    }
- 
-    public Remove(key: string): T {
-        var val = this.items[key];
-        delete this.items[key];
-        this.count--;
-        return val;
-    }
- 
-    public Item(key: string): T {
-        return this.items[key];
-    }
- 
-    public Keys(): string[] {
-        var keySet: string[] = [];
- 
-        for (var prop in this.items) {
-            if (this.items.hasOwnProperty(prop)) {
-                keySet.push(prop);
-            }
-        }
- 
-        return keySet;
-    }
- 
-    public Values(): T[] {
-        var values: T[] = [];
- 
-        for (var prop in this.items) {
-            if (this.items.hasOwnProperty(prop)) {
-                values.push(this.items[prop]);
-            }
-        }
- 
-        return values;
-    }
-}
+import { KeyedCollection } from './KeyedCollection';
+import { TextStats } from './TextStats';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -93,10 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
         
         var channel = vscode.window.createOutputChannel('Word stats results');
         channel.clear();
-        channel.appendLine('--------------------------------------------------------------------------------');
 
         var text = vscode.window.activeTextEditor.document.getText();
-        var words = text.split(' ');
+        text = TextStats.Spacify(text);
+        var words = text.split(' ').filter(word => word && word.length > 0);
         var dict = new KeyedCollection<number>();
         words.forEach(word => {
             if (!dict.ContainsKey(word)) {
@@ -118,8 +51,9 @@ export function activate(context: vscode.ExtensionContext) {
             })
             .sort((pair1, pair2) => { return pair2.count - pair1.count; });
 
-        channel.appendLine('Word stats:');
-        channel.appendLine(`Word count: ${dict.Count()}`);
+        channel.appendLine('Text stats:');
+        channel.appendLine(`Words count is ${dict.Count()}`);
+        channel.appendLine('Word count detail:');
         pairs.forEach(pair => { channel.appendLine(`'${pair.word}': ${pair.count}`); });
         channel.show();
     });
