@@ -1,9 +1,9 @@
 {
     "name": "word-stats",
-    "displayName": "word-stats",
-    "description": "",
+    "displayName": "Word Statistics for text",
+    "description": "Quick info about frequency of your words in the text",
     "version": "0.0.1",
-    "publisher": "m-zaretski",
+    "publisher": "AnelGroup",
     "engines": {
         "vscode": "^1.28.0"
     },
