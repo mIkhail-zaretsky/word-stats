@@ -11,13 +11,13 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:extension.calculateWordStats"
     ],
     "main": "./out/extension",
     "contributes": {
         "commands": [
             {
-                "command": "extension.sayHello",
+                "command": "extension.calculateWordStats",
                 "title": "Calculate word stats"
             }
         ]

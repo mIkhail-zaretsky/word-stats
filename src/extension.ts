@@ -91,26 +91,36 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         
-        var channel = vscode.window.createOutputChannel('Word statistic results');
+        var channel = vscode.window.createOutputChannel('Word stats results');
+        channel.clear();
+        channel.appendLine('--------------------------------------------------------------------------------');
 
         var text = vscode.window.activeTextEditor.document.getText();
         var words = text.split(' ');
-        var dict = new KeyedCollection<Number>();
+        var dict = new KeyedCollection<number>();
         words.forEach(word => {
             if (!dict.ContainsKey(word)) {
                 dict.Add(word, 1);
             }
             else {
                 let value = dict.Item(word);
-                dict.Remove(word);
-                dict.Add(word, value.valueOf() + 1);
+                dict.Add(word, value + 1);
             }
         });
 
-        dict.Keys().forEach(key => {
-            channel.appendLine(`'${key}': ${dict.Item(key)}`);
-        });
-        
+        let pairs = dict
+            .Keys()
+            .map(key => {
+                return {
+                    word: key,
+                    count: dict.Item(key)
+                };
+            })
+            .sort((pair1, pair2) => { return pair2.count - pair1.count; });
+
+        channel.appendLine('Word stats:');
+        channel.appendLine(`Word count: ${dict.Count()}`);
+        pairs.forEach(pair => { channel.appendLine(`'${pair.word}': ${pair.count}`); });
         channel.show();
     });
 
