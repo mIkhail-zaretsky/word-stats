@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         
-        var channel = vscode.window.createOutputChannel('Word stats results');
+        var channel = vscode.window.createOutputChannel('Word stats');
         channel.clear();
 
         var text = vscode.window.activeTextEditor.document.getText();
