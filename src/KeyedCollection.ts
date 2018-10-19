@@ -10,11 +10,12 @@ export interface IKeyedCollection<T> {
 
 export class KeyedCollection<T> implements IKeyedCollection<T> {
     private items: { [index: string]: T } = {};
+    private static _prefix: string = 'item_';
  
     private count: number = 0;
- 
+
     public ContainsKey(key: string): boolean {
-        return this.items.hasOwnProperty(key);
+        return this.items.hasOwnProperty(KeyedCollection.GetMaskedKey(key));
     }
  
     public Count(): number {
@@ -22,24 +23,26 @@ export class KeyedCollection<T> implements IKeyedCollection<T> {
     }
  
     public Add(key: string, value: T) {
-        if (!this.items.hasOwnProperty(key)) {
+        let actualKey = KeyedCollection.GetMaskedKey(key)
+        if (!this.items.hasOwnProperty(actualKey)) {
              this.count++;
         }
  
-        this.items[key] = value;
+        this.items[actualKey] = value;
 
         return true;
     }
  
     public Remove(key: string): T {
-        var val = this.items[key];
-        delete this.items[key];
+        let actualKey = KeyedCollection.GetMaskedKey(key);
+        var val = this.items[actualKey];
+        delete this.items[actualKey];
         this.count--;
         return val;
     }
  
     public Item(key: string): T {
-        return this.items[key];
+        return this.items[KeyedCollection.GetMaskedKey(key)];
     }
  
     public Keys(): string[] {
@@ -47,7 +50,7 @@ export class KeyedCollection<T> implements IKeyedCollection<T> {
  
         for (var prop in this.items) {
             if (this.items.hasOwnProperty(prop)) {
-                keySet.push(prop);
+                keySet.push(KeyedCollection.UnmaskActualKey(prop));
             }
         }
  
@@ -64,5 +67,13 @@ export class KeyedCollection<T> implements IKeyedCollection<T> {
         }
  
         return values;
+    }
+
+    private static GetMaskedKey(key: string): string {
+        return this._prefix + key;
+    }
+
+    private static UnmaskActualKey(actualKey: string): string {
+        return actualKey.substr(this._prefix.length);
     }
 }
