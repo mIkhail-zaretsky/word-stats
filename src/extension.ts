@@ -2,7 +2,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { KeyedCollection } from './KeyedCollection';
 import { TextStats } from './TextStats';
 
 // this method is called when your extension is activated
@@ -30,31 +29,23 @@ export function activate(context: vscode.ExtensionContext) {
         var text = vscode.window.activeTextEditor.document.getText();
         text = TextStats.Spacify(text);
         var words = text.split(' ').filter(word => word && word.length > 0);
-        var dict = new KeyedCollection<number>();
+        var map = new Map();
         words.forEach(word => {
-            if (!dict.ContainsKey(word)) {
-                dict.Add(word, 1);
-            }
-            else {
-                let value = dict.Item(word);
-                dict.Add(word, value + 1);
-            }
+            var count = map.get(word) | 0;
+            map.set(word, count + 1);
         });
 
-        let pairs = dict
-            .Keys()
-            .map(key => {
-                return {
-                    word: key,
-                    count: dict.Item(key)
-                };
-            })
-            .sort((pair1, pair2) => { return pair2.count - pair1.count; });
+        var entries: [string, number][] = [];
+        for(let entry of map) {
+            entries.push(entry);
+        }
+
+        entries.sort((entry1, entry2) => { return entry2[1] - entry1[1]; });
 
         channel.appendLine('Text stats:');
-        channel.appendLine(`Words count is ${dict.Count()}`);
+        channel.appendLine(`Words count is ${entries.length}`);
         channel.appendLine('Word count detail:');
-        pairs.forEach(pair => { channel.appendLine(`'${pair.word}': ${pair.count}`); });
+        entries.forEach(entry => { channel.appendLine(`'${entry[0]}': ${entry[1]}`); });
         channel.show();
     });
 
