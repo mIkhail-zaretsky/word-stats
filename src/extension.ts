@@ -2,7 +2,9 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { TextStats } from './TextStats';
+import { WordStats } from './TextStats';
+import fs = require('fs');
+//import { readFileSync, readdir } from 'fs';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -15,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('extension.calculateWordStats', () => {
+    let calculateWordStatsCommand = vscode.commands.registerCommand('extension.calculateWordStats', () => {
         // The code you place here will be executed every time your command is executed
         if (!vscode.window.activeTextEditor)
         {
@@ -27,29 +29,52 @@ export function activate(context: vscode.ExtensionContext) {
         channel.clear();
 
         var text = vscode.window.activeTextEditor.document.getText();
-        text = TextStats.Spacify(text);
-        var words = text.split(' ').filter(word => word && word.length > 0);
-        var map = new Map();
-        words.forEach(word => {
-            var count = map.get(word) | 0;
-            map.set(word, count + 1);
-        });
-
-        var entries: [string, number][] = [];
-        for(let entry of map) {
-            entries.push(entry);
-        }
-
-        entries.sort((entry1, entry2) => { return entry2[1] - entry1[1]; });
+        var stats = WordStats.fromText(text).getStats();
 
         channel.appendLine('Text stats:');
-        channel.appendLine(`Words count is ${entries.length}`);
+        channel.appendLine(`Words count is ${stats.length}`);
         channel.appendLine('Word count detail:');
-        entries.forEach(entry => { channel.appendLine(`'${entry[0]}': ${entry[1]}`); });
+        stats.forEach(entry => { channel.appendLine(`'${entry[0]}': ${entry[1]}`); });
         channel.show();
     });
 
-    context.subscriptions.push(disposable);
+    let calculateFolderWordStatsCommand = vscode.commands.registerCommand('extension.calculateFolderWordStats', (uri: vscode.Uri) => {
+        if (!uri) {
+            vscode.window.showWarningMessage('Folder to search not found.');
+            return;
+        }
+
+        var channel = vscode.window.createOutputChannel('Word stats');
+        channel.clear();
+
+        var wordStats = WordStats.Emtpy;
+        try {
+            let files = fs.readdirSync(uri.fsPath, );
+            files.forEach(fileName => {
+                let fullFilename = uri.fsPath + '\\' + fileName;
+                try{
+                    let content = fs.readFileSync(fullFilename, 'utf8');
+                    channel.appendLine('Analyzing ' + fullFilename);
+                    wordStats = wordStats.withText(content);
+                }
+                catch(_) {}
+            });
+        }
+        catch(ex){
+            vscode.window.showErrorMessage('Failed to read folder.');
+            channel.appendLine(ex);
+        }
+
+        let stats = wordStats.getStats();
+        channel.appendLine('Text stats:');
+        channel.appendLine(`Words count is ${stats.length}`);
+        channel.appendLine('Word count detail:');
+        stats.forEach(entry => { channel.appendLine(`'${entry[0]}': ${entry[1]}`); });
+        channel.show();
+    });
+
+    context.subscriptions.push(calculateWordStatsCommand);
+    context.subscriptions.push(calculateFolderWordStatsCommand);
 }
 
 // this method is called when your extension is deactivated
