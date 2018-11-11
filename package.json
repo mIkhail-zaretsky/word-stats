@@ -2,7 +2,7 @@
     "name": "word-stats",
     "displayName": "Word Statistics for text",
     "description": "Quick info about frequency of your words in the text",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "publisher": "AnelGroup",
     "repository": {
         "type": "git",

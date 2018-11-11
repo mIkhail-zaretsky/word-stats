@@ -2,9 +2,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { WordStats } from './TextStats';
+import { TextStats, WordStats } from './TextStats';
 import fs = require('fs');
-//import { readFileSync, readdir } from 'fs';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -29,13 +28,10 @@ export function activate(context: vscode.ExtensionContext) {
         channel.clear();
 
         var text = vscode.window.activeTextEditor.document.getText();
-        var stats = WordStats.fromText(text).getStats();
+        var textStats = TextStats.fromText(text);
+        var stats = textStats.getSortedStats();
 
-        channel.appendLine('Text stats:');
-        channel.appendLine(`Words count is ${stats.length}`);
-        channel.appendLine('Word count detail:');
-        stats.forEach(entry => { channel.appendLine(`'${entry[0]}': ${entry[1]}`); });
-        channel.show();
+        renderResults(channel, stats, textStats.length);
     });
 
     let calculateFolderWordStatsCommand = vscode.commands.registerCommand('extension.calculateFolderWordStats', (uri: vscode.Uri) => {
@@ -47,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
         var channel = vscode.window.createOutputChannel('Word stats');
         channel.clear();
 
-        var wordStats = WordStats.Emtpy;
+        var textStats = TextStats.Emtpy;
         try {
             let files = fs.readdirSync(uri.fsPath, );
             files.forEach(fileName => {
@@ -55,7 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
                 try{
                     let content = fs.readFileSync(fullFilename, 'utf8');
                     channel.appendLine('Analyzing ' + fullFilename);
-                    wordStats = wordStats.withText(content);
+                    textStats = textStats.concatText(content);
                 }
                 catch(_) {}
             });
@@ -65,16 +61,48 @@ export function activate(context: vscode.ExtensionContext) {
             channel.appendLine(ex);
         }
 
-        let stats = wordStats.getStats();
-        channel.appendLine('Text stats:');
-        channel.appendLine(`Words count is ${stats.length}`);
-        channel.appendLine('Word count detail:');
-        stats.forEach(entry => { channel.appendLine(`'${entry[0]}': ${entry[1]}`); });
-        channel.show();
+        let stats = textStats.getSortedStats();
+        renderResults(channel, stats, textStats.length);
     });
 
     context.subscriptions.push(calculateWordStatsCommand);
     context.subscriptions.push(calculateFolderWordStatsCommand);
+}
+
+function renderResults(channel: vscode.OutputChannel, stats: [string, WordStats][], textLength: number) {
+    channel.appendLine('Text stats:');
+    channel.appendLine(`Words count is ${stats.length}`);
+    channel.appendLine('Word count detail:');
+    stats.forEach(entry => {
+        var countInfo = `'${entry[0]}': ${entry[1].count}`;
+        var padEnd = Math.max(50 - countInfo.length, 0);
+        var pad = Array(padEnd).fill(' ').join('');
+        channel.appendLine(countInfo + pad + getVisualMap(entry[1].positions, textLength));
+    });
+    channel.show();
+}
+
+function getVisualMap(positions: Array<number>, length: number) {
+    var viewLength = 50;
+    var viewHits = Array(viewLength + 1).fill(0);
+    positions.forEach(position => {
+        var viewX = Math.round((position * viewLength) / length);
+        viewHits[viewX] = viewHits[viewX] + 1;
+    });
+    
+    var max = Math.max(...viewHits);
+    var symbols = ['░', '▒', '▓'];
+
+    var spread = viewHits.map(hit => (hit * 9) / max).map(weight => {
+        if (weight > 0) {
+            var oneOfThree = Math.ceil(weight / 3);
+            return symbols[oneOfThree - 1];
+        } else {
+            return '·';
+        }
+    }).join('');
+
+    return '[' + spread + ']';
 }
 
 // this method is called when your extension is deactivated
