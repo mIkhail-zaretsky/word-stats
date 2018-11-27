@@ -2,7 +2,7 @@
     "name": "word-stats",
     "displayName": "Word Statistics for text",
     "description": "Quick info about frequency of your words in the text",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "publisher": "AnelGroup",
     "repository": {
         "type": "git",
@@ -47,10 +47,10 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.21",
-        "tslint": "^5.8.0",
-        "@types/node": "^8.10.25",
-        "@types/mocha": "^2.2.42"
+        "typescript": "^3.1.6",
+        "vscode": "^1.1.22",
+        "tslint": "^5.11.0",
+        "@types/node": "^10.12.10",
+        "@types/mocha": "^5.2.5"
     }
 }
